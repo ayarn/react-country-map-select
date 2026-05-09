@@ -1,0 +1,10 @@
+node_modules
+dist
+.svg-cache.json
+src/maps/generated
+src/types/country-codes.ts
+*.log
+.DS_Store
+.vscode
+.idea
+coverage

@@ -1,0 +1,15 @@
+src
+scripts
+demo
+tests
+node_modules
+.github
+.svg-cache.json
+tsconfig.json
+tsup.config.ts
+vitest.config.ts
+*.log
+.DS_Store
+.vscode
+.idea
+coverage
