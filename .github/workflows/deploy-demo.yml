@@ -24,6 +24,8 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Generate sources
+        run: npm run prebuild
       - name: Build demo
         run: npm run demo:build
         env:
