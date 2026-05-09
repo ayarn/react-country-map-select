@@ -53,7 +53,7 @@
   ],
   "scripts": {
     "prebuild": "node scripts/build-svgs.mjs && node scripts/generate-types.mjs",
-    "build": "npm run prebuild && tsup && cp src/styles.css dist/",
+    "build": "npm run prebuild && tsup && node -e \"require('fs').copyFileSync('src/styles.css','dist/styles.css')\"",
     "test": "vitest run",
     "test:watch": "vitest",
     "demo": "vite --config demo/vite.config.ts",
