@@ -16,13 +16,13 @@
   ],
   "license": "MIT",
   "author": "",
-  "homepage": "https://github.com/your-org/react-country-map-select",
+  "homepage": "https://github.com/ayarn/react-country-map-select",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-org/react-country-map-select.git"
+    "url": "git+https://github.com/ayarn/react-country-map-select.git"
   },
   "bugs": {
-    "url": "https://github.com/your-org/react-country-map-select/issues"
+    "url": "https://github.com/ayarn/react-country-map-select/issues"
   },
   "type": "module",
   "main": "./dist/index.cjs",
