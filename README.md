@@ -1,7 +1,14 @@
-[![npm](https://img.shields.io/npm/v/react-country-map-select.svg)](https://www.npmjs.com/package/react-country-map-select)
-[![npm downloads](https://img.shields.io/npm/dm/react-country-map-select.svg)](https://www.npmjs.com/package/react-country-map-select)
-
 # react-country-map-select
+
+[![npm version](https://img.shields.io/npm/v/react-country-map-select.svg)](https://www.npmjs.com/package/react-country-map-select)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/react-country-map-select?label=min%2Bgzip)](https://bundlephobia.com/package/react-country-map-select)
+[![tree-shakeable](https://badgen.net/bundlephobia/tree-shaking/react-country-map-select)](https://bundlephobia.com/package/react-country-map-select)
+[![types](https://img.shields.io/npm/types/react-country-map-select.svg)](https://www.npmjs.com/package/react-country-map-select)
+[![license](https://img.shields.io/npm/l/react-country-map-select.svg)](./LICENSE)
+
+<p align="center">
+  <img src="./assets/demo.gif" alt="react-country-map-select demo — searchable country picker with map shapes" width="720" />
+</p>
 
 An accessible React dropdown for picking a country, with each option showing the country's actual map shape next to its name.
 
@@ -92,27 +99,97 @@ Accepts every standard `<svg>` prop, plus:
 
 ## Theming
 
-The component fills with `currentColor`, so a parent `color` will recolor the maps:
+All visuals are controlled by CSS custom properties on `.rcms-root`. Override them at any level &mdash; a parent, a wrapper, or per-instance via `style` / `className`.
+
+### Light mode (defaults)
+
+| Variable                | Default                    | Purpose                                   |
+| ----------------------- | -------------------------- | ----------------------------------------- |
+| `--rcms-bg`             | `#ffffff`                  | Background of trigger & menu              |
+| `--rcms-bg-hover`       | `#f9fafb`                  | Background on hover (toggle button)       |
+| `--rcms-bg-highlighted` | `#eef2ff`                  | Background of keyboard-highlighted option |
+| `--rcms-bg-selected`    | `#e0e7ff`                  | Background of currently selected option   |
+| `--rcms-fg`             | `#0f172a`                  | Primary text color                        |
+| `--rcms-fg-muted`       | `#64748b`                  | Placeholder & secondary text              |
+| `--rcms-border`         | `#e5e7eb`                  | Trigger & menu border                     |
+| `--rcms-border-hover`   | `#d1d5db`                  | Trigger border on hover                   |
+| `--rcms-border-focus`   | `#6366f1`                  | Trigger border when focused               |
+| `--rcms-ring`           | `rgba(99, 102, 241, 0.18)` | Focus ring color                          |
+| `--rcms-radius`         | `10px`                     | Corner radius                             |
+| `--rcms-map-color`      | `#6366f1`                  | Map SVG fill (uses `currentColor`)        |
+| `--rcms-row-gap`        | `0.625rem`                 | Gap between map and label                 |
+| `--rcms-trigger-height` | `44px`                     | Min-height of the trigger                 |
+| `--rcms-shadow`         | (subtle)                   | Shadow on the trigger                     |
+| `--rcms-shadow-menu`    | (medium)                   | Shadow on the open menu                   |
+
+### Dark mode
+
+Dark theme kicks in automatically via `@media (prefers-color-scheme: dark)`. To force it for a specific subtree, scope your own override:
 
 ```css
-.my-picker {
-  color: #2563eb;
+.my-app[data-theme="dark"] .rcms-root {
+  --rcms-bg: #0f172a;
+  --rcms-fg: #f1f5f9;
+  --rcms-border: #1f2937;
+  --rcms-border-focus: #818cf8;
+  --rcms-bg-hover: #1e293b;
+  --rcms-bg-highlighted: #1e293b;
+  --rcms-bg-selected: #312e81;
+  --rcms-fg-muted: #94a3b8;
+  --rcms-map-color: #a5b4fc;
+  --rcms-ring: rgba(129, 140, 248, 0.22);
 }
 ```
 
-You can also override individual tokens via CSS custom properties:
+### Example: brand colors
 
 ```css
-.my-picker {
-  --rcms-border: #cbd5e1;
-  --rcms-radius: 8px;
-  --rcms-bg: #ffffff;
-  --rcms-bg-hover: #f1f5f9;
-  --rcms-bg-selected: #dbeafe;
-  --rcms-fg: #0f172a;
-  --rcms-map-color: #0ea5e9;
+.rcms-root {
+  --rcms-border-focus: #f97316;
+  --rcms-ring: rgba(249, 115, 22, 0.22);
+  --rcms-bg-highlighted: #fff7ed;
+  --rcms-bg-selected: #ffedd5;
+  --rcms-map-color: #f97316;
+  --rcms-radius: 16px;
 }
 ```
+
+### Example: per-instance override
+
+```tsx
+<CountryMapSelect
+  ariaLabel="Country"
+  style={{
+    // Cast as any to allow CSS custom property keys
+    ["--rcms-border-focus" as any]: "#10B981",
+    ["--rcms-ring" as any]: "rgba(16, 185, 129, 0.22)",
+  }}
+/>
+```
+
+### Reduced motion
+
+The package automatically disables animations under `@media (prefers-reduced-motion: reduce)` &mdash; no opt-in needed.
+
+### Overriding class names
+
+Every visible element has a stable BEM-style class you can target directly if CSS variables aren't enough:
+
+| Class                       | Element                                    |
+| --------------------------- | ------------------------------------------ |
+| `.rcms-root`                | Outer wrapper                              |
+| `.rcms-trigger`             | Trigger row (map + input + caret)          |
+| `.rcms-trigger-map`         | Selected country's map icon in the trigger |
+| `.rcms-input`               | Search / typeahead input                   |
+| `.rcms-toggle`              | Caret button                               |
+| `.rcms-menu`                | Open dropdown listbox                      |
+| `.rcms-option`              | Single option row                          |
+| `.rcms-option--highlighted` | Option under keyboard highlight            |
+| `.rcms-option--selected`    | Currently selected option                  |
+| `.rcms-option-map`          | Option's map icon                          |
+| `.rcms-option-label`        | Option's text label                        |
+| `.rcms-empty`               | "No matches" row                           |
+| `.rcms-map-skeleton`        | Loading placeholder for lazy-loaded maps   |
 
 ## Accessibility
 

@@ -1,35 +1,57 @@
-import { useCombobox } from 'downshift'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { CountryMap } from './CountryMap'
-import { countries as ALL_COUNTRIES, getCountry } from './countries'
-import type { Country, CountryCode, CountryMapSelectProps } from './types'
+"use client";
+
+import { useCombobox } from "downshift";
+import {
+  forwardRef,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Ref,
+} from "react";
+import { CountryMap } from "./CountryMap";
+import { countries as ALL_COUNTRIES, getCountry } from "./countries";
+import type { Country, CountryCode, CountryMapSelectProps } from "./types";
 
 function defaultLabel(country: Country): string {
-  return country.name
+  return country.name;
 }
 
 function filterCountries(items: readonly Country[], query: string): Country[] {
-  const q = query.trim().toLowerCase()
-  if (!q) return [...items]
+  const q = query.trim().toLowerCase();
+  if (!q) return [...items];
   return items.filter(
-    (c) => c.name.toLowerCase().includes(q) || c.code.includes(q)
-  )
+    (c) => c.name.toLowerCase().includes(q) || c.code.includes(q),
+  );
 }
 
 function resolveItems(
   whitelist?: readonly CountryCode[],
-  blacklist?: readonly CountryCode[]
+  blacklist?: readonly CountryCode[],
 ): Country[] {
-  let items: readonly Country[] = ALL_COUNTRIES
+  let items: readonly Country[] = ALL_COUNTRIES;
   if (whitelist && whitelist.length > 0) {
-    const allow = new Set(whitelist)
-    items = ALL_COUNTRIES.filter((c) => allow.has(c.code))
+    const allow = new Set(whitelist);
+    items = ALL_COUNTRIES.filter((c) => allow.has(c.code));
   }
   if (blacklist && blacklist.length > 0) {
-    const deny = new Set(blacklist)
-    items = items.filter((c) => !deny.has(c.code))
+    const deny = new Set(blacklist);
+    items = items.filter((c) => !deny.has(c.code));
   }
-  return [...items]
+  return [...items];
+}
+
+// Compose multiple React refs into one callback ref.
+function composeRefs<T>(...refs: Array<Ref<T> | undefined>) {
+  return (node: T | null) => {
+    for (const ref of refs) {
+      if (typeof ref === "function") {
+        ref(node);
+      } else if (ref && typeof ref === "object") {
+        (ref as React.MutableRefObject<T | null>).current = node;
+      }
+    }
+  };
 }
 
 /**
@@ -42,7 +64,10 @@ function resolveItems(
  * Keyboard: ArrowUp/ArrowDown moves highlight, Home/End jump to ends,
  * Enter selects, Esc closes, typing filters.
  */
-export function CountryMapSelect(props: CountryMapSelectProps) {
+export const CountryMapSelect = forwardRef<
+  HTMLInputElement,
+  CountryMapSelectProps
+>(function CountryMapSelect(props, forwardedRef) {
   const {
     value,
     defaultValue = null,
@@ -50,7 +75,7 @@ export function CountryMapSelect(props: CountryMapSelectProps) {
     countries: countriesProp,
     exclude,
     searchable = true,
-    placeholder = 'Select a country',
+    placeholder = "Select a country",
     getOptionLabel = defaultLabel,
     renderOption,
     mapSize = 20,
@@ -60,45 +85,46 @@ export function CountryMapSelect(props: CountryMapSelectProps) {
     className,
     style,
     menuMaxHeight = 320,
-  } = props
+    name,
+    required = false,
+    autoFocus = false,
+  } = props;
 
-  // Filter the master country list by whitelist/blacklist props.
   const items = useMemo(
     () => resolveItems(countriesProp, exclude),
-    [countriesProp, exclude]
-  )
+    [countriesProp, exclude],
+  );
 
-  // Track the controlled/uncontrolled selected country.
   const [internalSelected, setInternalSelected] = useState<Country | null>(
-    () => (defaultValue ? getCountry(defaultValue) ?? null : null)
-  )
-  const isControlled = value !== undefined
+    () => (defaultValue ? (getCountry(defaultValue) ?? null) : null),
+  );
+  const isControlled = value !== undefined;
   const selectedItem: Country | null = isControlled
     ? value
-      ? getCountry(value) ?? null
+      ? (getCountry(value) ?? null)
       : null
-    : internalSelected
+    : internalSelected;
 
-  // Stable filtered list for the open menu.
-  const [inputValue, setInputValue] = useState('')
+  const [inputValue, setInputValue] = useState("");
   const filteredItems = useMemo(
     () => (searchable ? filterCountries(items, inputValue) : items),
-    [items, inputValue, searchable]
-  )
+    [items, inputValue, searchable],
+  );
 
-  // Keep the input text in sync when selection changes from the outside.
-  const inputValueRef = useRef(inputValue)
-  inputValueRef.current = inputValue
+  const inputValueRef = useRef(inputValue);
+  inputValueRef.current = inputValue;
   useEffect(() => {
-    if (selectedItem && inputValueRef.current !== getOptionLabel(selectedItem)) {
-      setInputValue(getOptionLabel(selectedItem))
+    if (
+      selectedItem &&
+      inputValueRef.current !== getOptionLabel(selectedItem)
+    ) {
+      setInputValue(getOptionLabel(selectedItem));
     }
-    if (!selectedItem && inputValueRef.current !== '') {
-      setInputValue('')
+    if (!selectedItem && inputValueRef.current !== "") {
+      setInputValue("");
     }
-    // We intentionally only react to selection changes here.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedItem])
+  }, [selectedItem]);
 
   const {
     isOpen,
@@ -110,40 +136,47 @@ export function CountryMapSelect(props: CountryMapSelectProps) {
     openMenu,
   } = useCombobox<Country>({
     items: filteredItems,
-    itemToString: (item) => (item ? getOptionLabel(item) : ''),
+    itemToString: (item) => (item ? getOptionLabel(item) : ""),
     selectedItem,
     inputValue,
     onInputValueChange: ({ inputValue: next, type }) => {
-      // Don't filter when input merely reflects a selection click.
       if (
         type === useCombobox.stateChangeTypes.InputBlur ||
         type === useCombobox.stateChangeTypes.ItemClick ||
         type === useCombobox.stateChangeTypes.InputKeyDownEnter
       ) {
-        return
+        return;
       }
-      setInputValue(next ?? '')
+      setInputValue(next ?? "");
     },
     onSelectedItemChange: ({ selectedItem: next }) => {
-      if (!next) return
-      if (!isControlled) setInternalSelected(next)
-      setInputValue(getOptionLabel(next))
-      onChange?.(next.code, next)
+      if (!next) return;
+      if (!isControlled) setInternalSelected(next);
+      setInputValue(getOptionLabel(next));
+      onChange?.(next.code, next);
     },
-  })
+  });
 
   const inputProps = getInputProps({
     placeholder,
     disabled,
     readOnly: !searchable,
-    'aria-label': ariaLabel,
+    "aria-label": ariaLabel,
+    "aria-required": required || undefined,
     id,
+    required,
+    autoFocus,
     onFocus: () => {
-      if (!disabled && !isOpen) openMenu()
+      if (!disabled && !isOpen) openMenu();
     },
-  })
+  });
 
-  const wrapperClass = ['rcms-root', className].filter(Boolean).join(' ')
+  const composedInputRef = composeRefs<HTMLInputElement>(
+    (inputProps as { ref?: Ref<HTMLInputElement> }).ref,
+    forwardedRef,
+  );
+
+  const wrapperClass = ["rcms-root", className].filter(Boolean).join(" ");
 
   return (
     <div className={wrapperClass} style={style}>
@@ -162,11 +195,20 @@ export function CountryMapSelect(props: CountryMapSelectProps) {
             style={{ width: mapSize, height: mapSize }}
           />
         )}
-        <input className="rcms-input" {...inputProps} />
+        <input {...inputProps} ref={composedInputRef} className="rcms-input" />
+        {name && (
+          <input
+            type="hidden"
+            name={name}
+            value={selectedItem?.code ?? ""}
+            aria-hidden="true"
+            tabIndex={-1}
+          />
+        )}
         <button
           type="button"
           className="rcms-toggle"
-          aria-label={isOpen ? 'Close country list' : 'Open country list'}
+          aria-label={isOpen ? "Close country list" : "Open country list"}
           {...getToggleButtonProps({ disabled })}
         >
           <span className="rcms-toggle-caret" aria-hidden>
@@ -183,26 +225,26 @@ export function CountryMapSelect(props: CountryMapSelectProps) {
       >
         {isOpen &&
           filteredItems.map((item, index) => {
-            const highlighted = highlightedIndex === index
-            const selected = selectedItem?.code === item.code
-            const itemProps = getItemProps({ item, index })
-            const className = [
-              'rcms-option',
-              highlighted && 'rcms-option--highlighted',
-              selected && 'rcms-option--selected',
+            const highlighted = highlightedIndex === index;
+            const selected = selectedItem?.code === item.code;
+            const itemProps = getItemProps({ item, index });
+            const optionClass = [
+              "rcms-option",
+              highlighted && "rcms-option--highlighted",
+              selected && "rcms-option--selected",
             ]
               .filter(Boolean)
-              .join(' ')
+              .join(" ");
 
             if (renderOption) {
               return (
-                <li {...itemProps} key={item.code} className={className}>
+                <li {...itemProps} key={item.code} className={optionClass}>
                   {renderOption(item, { highlighted, selected })}
                 </li>
-              )
+              );
             }
             return (
-              <li {...itemProps} key={item.code} className={className}>
+              <li {...itemProps} key={item.code} className={optionClass}>
                 <CountryMap
                   code={item.code}
                   size={mapSize}
@@ -213,7 +255,7 @@ export function CountryMapSelect(props: CountryMapSelectProps) {
                   {getOptionLabel(item)}
                 </span>
               </li>
-            )
+            );
           })}
         {isOpen && filteredItems.length === 0 && (
           <li className="rcms-empty" role="presentation">
@@ -222,5 +264,5 @@ export function CountryMapSelect(props: CountryMapSelectProps) {
         )}
       </ul>
     </div>
-  )
-}
+  );
+});
